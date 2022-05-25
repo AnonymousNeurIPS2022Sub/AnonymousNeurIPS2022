@@ -9,8 +9,8 @@ from tqdm import tqdm
 from potentials.MoleculePotential import MoleculePotential
 
 class AlaninePotentialMD(MoleculePotential):
-    def __init__(self, start_file, index, reset_steps=100, bridge=False, save_file=None, temp_mul = 1):
-        super().__init__(start_file, index, reset_steps, bridge, save_file, temp_mul)
+    def __init__(self, start_file, index, reset_steps=100, save_file=None, temp_mul = 1):
+        super().__init__(start_file, index, reset_steps, save_file, temp_mul)
 
     def setup(self):
         # print(self.temp_mul)
@@ -57,17 +57,3 @@ class AlaninePotentialMD(MoleculePotential):
 
     def get_position_file(self):
         return f"{self.save_file}/AlaninePositions"
-
-
-# tester
-if __name__ == "__main__":
-    pot = AlaninePotentialMD(start_file='./files/starting.pdb')
-    initial_positions = np.asarray(pot.simulation.context.getState(
-        getPositions=True).getPositions().value_in_unit(unit.nanometer))
-    for i in tqdm(range(1000)):
-        forces = np.random.random([22, 3])
-        positions = (np.random.random([22,
-                                       3]) * 0.01 + 1) * initial_positions  # at most 1% different from initial_pos
-        new_pot_E = pot.potential(positions)
-        new_positions, new_forces = pot.drift(forces)
-        print(new_positions)

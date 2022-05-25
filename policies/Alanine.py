@@ -3,16 +3,14 @@ from torch import nn
 
 
 class NNPolicy(nn.Module):
-    def __init__(self, device, force, T, bridge = False):
+    def __init__(self, device, force, dims, T):
         super().__init__()
         self.device = device
         self.force = force
         self.T = T
-        self.bridge = bridge
+        self.dims = dims
 
-        self.input_dims = 22 * 3
-        if self.bridge:
-            self.input_dims += 1
+        self.input_dims = self.dims
 
         if not self.force:
             self.output_dim = 1
@@ -46,10 +44,6 @@ class NNPolicy(nn.Module):
             x.requires_grad = True
 
         x_ = x
-
-        if self.bridge: # We need to include the time step if we bridge
-            tmp = t.unsqueeze(0).repeat(x_.shape[0], 1).to(x_.device) / self.T
-            x_ = torch.hstack([x_, tmp])
 
         out = self.linear_relu_stack(x_)
         if not self.force:

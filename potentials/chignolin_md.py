@@ -7,8 +7,8 @@ from potentials.MoleculePotential import MoleculePotential
 
 
 class ChignolinPotentialMD(MoleculePotential):
-    def __init__(self, start_file, index, reset_steps=100, bridge=False, save_file=None):
-        super().__init__(start_file, index, reset_steps, bridge, save_file)
+    def __init__(self, start_file, index, reset_steps=100, save_file=None):
+        super().__init__(start_file, index, reset_steps, save_file)
 
 
     def setup(self):
@@ -39,7 +39,7 @@ class ChignolinPotentialMD(MoleculePotential):
 
         integrator.setConstraintTolerance(0.00001)
 
-        platform = mm.Platform.getPlatformByName('cpu')
+        platform = mm.Platform.getPlatformByName('CUDA')
 
         properties = {'DeviceIndex': '0', 'Precision': 'mixed'}
 
@@ -51,6 +51,3 @@ class ChignolinPotentialMD(MoleculePotential):
 
     def get_position_file(self):
         return f"{self.save_file}/ChignolinPositions"
-
-    def get_current_positions(self):
-        return self.simulation.context.getState().getPositions()

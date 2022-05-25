@@ -4,16 +4,16 @@ import numpy as np
 import torch
 
 from Dynamics.MoleculeBase import MoleculeBaseDynamics
-from potentials.chignolin_md import ChignolinPotentialMD
+from potentials.poly_md import PolyPotentialMD
 
 
-class ChignolinDynamics(MoleculeBaseDynamics):
+class PolyDynamics(MoleculeBaseDynamics):
     def __init__(self, loss_func, n_samples=10, device='cpu', save_file=None):
         super().__init__(loss_func, n_samples, device, save_file)
 
     def _init_ending_positions(self):
         print("Generating target points")
-        pot = ChignolinPotentialMD('./potentials/files/chignolin_folded.pdb', -1)
+        pot = PolyPotentialMD('./potentials/files/3mer_pp1.pdb', -1)
         pot.simulation.minimizeEnergy()
         pot.simulation.step(1)
         ending_positions = torch.tensor(pot.reporter.latest_positions)
@@ -25,7 +25,7 @@ class ChignolinDynamics(MoleculeBaseDynamics):
         # Initialize potentials
         potentials = []
         for i in range(self.n_samples):
-            pot = ChignolinPotentialMD('./potentials/files/chignolin_unfolded.pdb', i, save_file=self.save_file)
+            pot = PolyPotentialMD('./potentials/files/3mer_pp2.pdb', i, save_file=self.save_file)
             potentials.append(pot)
 
         return potentials
@@ -46,7 +46,7 @@ class ChignolinDynamics(MoleculeBaseDynamics):
             t = (px - pend) ** 2
             cost_distance = torch.mean(t, dim=(2, 3))
 
-            cost_distance_final = (cost_distance).exp() * 100 
+            cost_distance_final = ((cost_distance).exp() - 1.) * 10000
 
             expected_cost_distance_final = torch.mean(cost_distance_final, 0)
 
