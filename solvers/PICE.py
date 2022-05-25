@@ -3,7 +3,7 @@ from tqdm import tqdm
 
 
 def PICE(env, policy, n_rollouts, n_samples, n_steps, dt, std, dim, R,
-               logger, plotters=None, verbose=True, file=None, device='cpu', lr=0.00001, start_step=0):
+               logger, force, plotters=None, verbose=True, file=None, device='cpu', lr=0.00001, start_step=0):
 
     p_dim = dim
     u_dim = dim // 2 # Doesn't include the positions
@@ -52,7 +52,10 @@ def PICE(env, policy, n_rollouts, n_samples, n_steps, dt, std, dim, R,
             x = new_state.detach()
             t = torch.tensor(s * dt)
             # Determine the action
-            _, update_u = policy(x, t)
+            if force:
+                update_u = policy (x, t)
+            else:
+                _, update_u = policy(x, t)
 
             # We need to get the gradient wrt the parameters for each input individually as we need to scale them later based on the score for each trajectory
             for n in range(0, n_samples):
@@ -63,10 +66,7 @@ def PICE(env, policy, n_rollouts, n_samples, n_steps, dt, std, dim, R,
                     tmp = torch.autograd.grad(update_u[n], policy.parameters(), retain_graph=True, allow_unused=True, grad_outputs=tmp_)# * dt
                 tmp_new = []
                 for element in tmp:
-                    if element is None:
-                        print("Hello!")
-                    if element is not None:
-                        tmp_new.append(element)
+                    tmp_new.append(element)
                 tmp = tmp_new
                 if s == 0:
                     grad_policy.append(tmp)
@@ -136,22 +136,6 @@ def PICE(env, policy, n_rollouts, n_samples, n_steps, dt, std, dim, R,
 
         logger.log(paths[:, :, :].detach(), costs_q, costs_noise, costs_action, path_cost, path_cost_phi, path_cost_final, path_cost_exp, policy, r)
 
-        with torch.no_grad():
-            if verbose:
-                if plotters is not None:
-                    for plotter in plotters:
-                        if plotter.plot_now(r, 'after_epoch'):
-                            plotter.plot(paths[:, :, :].detach(), r, us.detach())
-
-                print(f"costs_q: {costs_q.sum(dim=1)}")
-                print(f"costs_noise: {costs_noise.sum(dim=1)}")
-                print(f"costs_action: {costs_action.sum(dim=1)}")
-                print(f"path_cost: {path_cost}")
-                print(f"path_cost_phi: {path_cost_phi}")
-                print(f"path_cost_final: {path_cost_final}")
-                print(f"path_cost_final_subtract: {path_cost_final_subtract}")
-                print(f"path_cost_exp: {path_cost_exp}")
-                print(f"normalizing: {normalizing}")
 
         env.reset()
 
